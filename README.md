@@ -1,7 +1,5 @@
 # AgentReport
 
-<br>
-
 ## Introduction
 
 Hey there are you also tired of keeping up with news articles and cross checking different news sources to see if you are getting the correct news or not. Well now with this new AI agent you won't have to worry about anything.
