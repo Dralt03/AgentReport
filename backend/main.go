@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/Dralt03/AgentReport/api"
+	"github.com/gorilla/mux"
 )
 
-func helloHandler(w http.ResponseWriter, r *http.Request){
-	fmt.Fprintf(w, "Hello Wold")
-}
+func main() {
+	r := mux.NewRouter()
 
-func main(){
-	http.HandleFunc("/", helloHandler)
+	r.HandleFunc("/scrape", api.ScrapeHandler).Methods("GET")
+
 	fmt.Println("Started Listening on port 8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(":8000", r))
 }

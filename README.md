@@ -2,9 +2,9 @@
 
 ## Introduction
 
-Hey there are you also tired of keeping up with news articles and cross checking different news sources to see if you are getting the correct news or not. Well now with this new AI agent you won't have to worry about anything.
+AgentReport is an AI-powered news aggregation and summarization tool designed to simplify your daily news consumption. It addresses the challenge of information overload and the need for cross-verification of news sources by providing a single, reliable platform for current events.
 
-Agent Report scrapes the internet and the major news outlets such as [CNN](https://edition.cnn.com/), [BBC](https://www.bbc.com/) and many more to get news articles. An AI voice agent that uses [Vapi](https://vapi.ai) as a virtual assistant will then be ready to answer all your questions about the current affairs and even summarize the today's news or any previous news which you would like.
+AgentReport scrapes major news outlets like [CNN](https://edition.cnn.com/) and the [BBC](https://www.bbc.com/) to gather news articles. It then utilizes an AI voice agent, powered by [Vapi](https://vapi.ai), to answer your questions about current affairs, provide news summaries, and retrieve information from previous dates.
 
 <br>
 
@@ -12,7 +12,7 @@ Agent Report scrapes the internet and the major news outlets such as [CNN](https
 
 Agent Report follows a workflow that is similar to the one given below:
 
-<img src="./public/sysdesign.jpg" alt="System Desgin">
+<img src="./public/sysdesign.jpg" alt="System Design">
 
 <br>
 
