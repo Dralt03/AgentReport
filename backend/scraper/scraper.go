@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"unicode"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -33,17 +32,14 @@ type Article struct {
 }
 
 func Scrape() string{
-	c := colly.NewCollector(
-		colly.AllowedDomains("cnn.com", "www.cnn.com"),
-	)
-	
 	
 	var articles []Article
-	scrapeSite(c, "cnn", &articles)
-	scrapeSite(c, "bbc", &articles)
-	scrapeSite(c, "cnbc", &articles)
-	scrapeSite(c, "guardian", &articles)
+	scrapeSite(colly.NewCollector(colly.AllowedDomains("cnn.com", "edition.cnn.com", "www.cnn.com")), "cnn", &articles)
+	scrapeSite(nil, "bbc", &articles)
+	scrapeSite(nil, "cnbc", &articles)
+	scrapeSite(nil, "guardian", &articles)
 
+	
 	jsonData, err := json.MarshalIndent(articles, "", "  ")
 	if err != nil {
 		log.Fatal(err)
@@ -52,23 +48,7 @@ func Scrape() string{
 	return string(jsonData)
 }
 
-//Formatting text for better readability
-func cleanText(text string) string {
-	text = strings.TrimSpace(text)
-	text = strings.Join(strings.Fields(text), " ")
-
-	if len(text) > 0 {
-		runes := []rune(text)
-		runes[0] = unicode.ToUpper(runes[0])
-		text = string(runes)
-	}
-	return text
-}
-
-var htmlTagRegex = regexp.MustCompile(`<[^>]*>`)
-func stripHTML(input string) string{
-	return strings.TrimSpace(htmlTagRegex.ReplaceAllString(input, ""))
-}
+var malformedFormat = regexp.MustCompile(`%[^\w]`)
 
 func fetchRSS(url string, src string, articles *[]Article) {
     resp, err := http.Get(url)
@@ -85,9 +65,24 @@ func fetchRSS(url string, src string, articles *[]Article) {
 
 
     for _, item := range rss.Channel.Items {
+		cleanTitle := cleanText(item.Title)
+        cleanDesc := cleanText(item.Description)
+
+		content := cleanText(strings.ReplaceAll(item.Description, "\"", "'"))
+
+		if malformedFormat.MatchString(cleanTitle) || malformedFormat.MatchString(content) {
+			continue
+		}
+
+		if !json.Valid([]byte(`"` + cleanTitle + `"`)) || !json.Valid([]byte(`"` + content + `"`)) {
+			continue
+		}
+
+		cleanDesc = strings.ReplaceAll(cleanDesc, "\"", "'")
+		
         *articles = append(*articles, Article{
-            Title:    cleanText(item.Title),
-            Content:  cleanText(stripHTML(item.Description)),
+            Title:    cleanTitle,
+            Content:  cleanDesc,
             Src:      src,
         })
     }
@@ -97,7 +92,9 @@ func scrapeSite(c *colly.Collector, site string, articles *[]Article) {
 	
 	switch site {
 	case "cnn":
-		c.AllowedDomains = []string{"cnn.com", "www.cnn.com"}
+		if c == nil {
+			log.Fatal("Collector required for CNN")
+		}
 		c.OnHTML("div.container__headline", func(e *colly.HTMLElement) {
 			title := cleanText(e.Text)
 			content := cleanText(e.DOM.Parent().Find(".container__description").Text())
@@ -110,6 +107,7 @@ func scrapeSite(c *colly.Collector, site string, articles *[]Article) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		
 
 	case "bbc":
         fetchRSS("https://feeds.bbci.co.uk/news/rss.xml", "bbc", articles)
