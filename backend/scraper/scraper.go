@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -34,10 +36,29 @@ type Article struct {
 func Scrape() string{
 	
 	var articles []Article
-	scrapeSite(colly.NewCollector(colly.AllowedDomains("cnn.com", "edition.cnn.com", "www.cnn.com")), "cnn", &articles)
-	scrapeSite(nil, "bbc", &articles)
-	scrapeSite(nil, "cnbc", &articles)
-	scrapeSite(nil, "guardian", &articles)
+	
+	var wg sync.WaitGroup
+	wg.Add(4)
+
+	go func() {
+		defer wg.Done()
+		scrapeSite(colly.NewCollector(colly.AllowedDomains("cnn.com", "edition.cnn.com", "www.cnn.com")), "cnn", &articles)
+	}()
+	go func() {
+		defer wg.Done()
+		scrapeSite(nil, "bbc", &articles)
+	}()
+	go func() {
+		defer wg.Done()
+		scrapeSite(nil, "cnbc", &articles)
+	}()
+	go func() {
+		defer wg.Done()
+		scrapeSite(nil, "guardian", &articles)
+	}()
+
+	wg.Wait() 
+
 
 	
 	jsonData, err := json.MarshalIndent(articles, "", "  ")
@@ -84,6 +105,7 @@ func fetchRSS(url string, src string, articles *[]Article) {
             Title:    cleanTitle,
             Content:  cleanDesc,
             Src:      src,
+			TimeSpan: time.Now().Format(time.RFC3339),
         })
     }
 }
@@ -100,7 +122,7 @@ func scrapeSite(c *colly.Collector, site string, articles *[]Article) {
 			content := cleanText(e.DOM.Parent().Find(".container__description").Text())
 			
 			if title != ""  && content != ""{
-				*articles = append(*articles, Article{Title: title, Content: content, Src:"cnn"})
+				*articles = append(*articles, Article{Title: title, Content: content, Src:"cnn", TimeSpan: time.Now().Format(time.RFC3339)})
 			}
 		})
 		err := c.Visit("https://www.cnn.com")
@@ -108,6 +130,12 @@ func scrapeSite(c *colly.Collector, site string, articles *[]Article) {
 			log.Fatal(err)
 		}
 		
+		c.OnError(func(r *colly.Response, err error) {
+			log.Printf("Request to %s failed: %v", r.Request.URL, err)
+			if err := r.Request.Retry(); err != nil {
+				log.Printf("Retry failed for %s: %v", r.Request.URL, err)
+			}
+		})
 
 	case "bbc":
         fetchRSS("https://feeds.bbci.co.uk/news/rss.xml", "bbc", articles)
