@@ -1,17 +1,21 @@
 package scraper
 
 import (
+	"database/sql"
 	"encoding/json"
 	"encoding/xml"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 //For news channels because Colly only scrapes raw HTML
@@ -59,8 +63,28 @@ func Scrape() string{
 
 	wg.Wait() 
 
+	if err := godotenv.Load(); err != nil {
+        log.Println(".env not found")
+    }
 
-	
+	connString := os.Getenv("DATABASE_URL")
+	if(connString == ""){
+		log.Print("DATABASE URL NOT FOUND")
+	}
+
+	db, err := sql.Open("postgres", connString)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	defer db.Close()
+
+
+	err = saveToDB(db, articles)
+	if err != nil {
+		log.Fatalf("Saving to DB failed: %v", err)
+	}
+
 	jsonData, err := json.MarshalIndent(articles, "", "  ")
 	if err != nil {
 		log.Fatal(err)

@@ -1,58 +1,111 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Zap, ArrowRight } from "lucide-react";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { useState } from "react";
 
-async function handleLogin() {}
+export default function HomePage() {
+  const [isCallActive, setIsCallActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const vapiRef = useRef(null);
 
-export default function Home() {
+  useEffect(() => {
+    const initVapi = async () => {
+      if (typeof window !== "undefined") {
+        const Vapi = (await import("@vapi-ai/web")).default;
+        vapiRef.current = new Vapi(
+          process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "your-vapi-public-key"
+        );
+
+        // Set up event listeners
+        vapiRef.current.on("call-start", () => {
+          setIsCallActive(true);
+          setIsLoading(false);
+        });
+
+        vapiRef.current.on("call-end", () => {
+          setIsCallActive(false);
+          setIsLoading(false);
+        });
+
+        vapiRef.current.on("error", (error) => {
+          console.error("Vapi error:", error);
+          setIsLoading(false);
+        });
+      }
+    };
+
+    initVapi();
+
+    return () => {
+      if (vapiRef.current) {
+        vapiRef.current.stop();
+      }
+    };
+  }, []);
+
+  const handleConnect = async () => {
+    if (!vapiRef.current) return;
+
+    if (isCallActive) {
+      vapiRef.current.stop();
+    } else {
+      setIsLoading(true);
+      try {
+        await vapiRef.current.start({
+          model: {
+            provider: "openai",
+            model: "gpt-3.5-turbo",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a helpful AI assistant. Keep responses concise and friendly.",
+              },
+            ],
+          },
+          voice: {
+            provider: "11labs",
+            voiceId: "21m00Tcm4TlvDq8ikWAM",
+          },
+        });
+      } catch (error) {
+        console.error("Failed to start call:", error);
+        setIsLoading(false);
+      }
+    }
+  };
+
   return (
-    <div className="w-screen h-screen">
-      <div className="flex h-16 w-full items-center justify-between px-4 md:px-6">
-        <div className="flex items-center w-full">
-          <div className="flex h-8 w-8 mx-2 items-center justify-center rounded-lg bg-primary">
-            <Zap className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold">Agent Report</span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="hidden md:inline-flex">
-            Sign In
-          </Button>
-          <Button size="sm">Get Started</Button>
-        </div>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+      <div className="relative flex items-center justify-center mb-12">
+        {/* Centered Blob with call indicator */}
+        <div
+          className={`blob w-32 h-24 bg-gradient-to-br from-purple-400 via-pink-400 via-cyan-400 to-blue-400 shadow-xl opacity-90 ${
+            isCallActive ? "animate-pulse" : ""
+          }`}
+        ></div>
+
+        {isCallActive && (
+          <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+        )}
       </div>
-      <section className="py-12 px-20 md:py-24">
-        <div className="px-4 md:px-6 flex justify-between items-center">
-          <div className="flex flex-col justify-center space-y-4">
-            <div className="space-y-2">
-              <Badge variant="secondary" className="w-fit">
-                New: AI-Powered Workflows
-              </Badge>
-              <h1 className="text-5xl font-bold xl:text-6xl/none">
-                Agent Report Ready for Ease and Convinience
-              </h1>
-              <p className="max-w-[600px] text-muted-foreground py-8 md:text-xl">
-                Your personal AI assistant to help you save time and effort so
-                that you can focus on the more important stuff
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 min-[400px]:flex-row">
-              <Button size="lg" className="h-12 px-8">
-                Sign Up
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <DotLottieReact
-            className="max-md:hidden"
-            src="https://lottie.host/2fc1d95f-fca1-48d6-867f-45adbd454eaf/mmRzidBQhn.lottie"
-            loop
-            autoplay
-          />
-        </div>
-      </section>
+
+      <button
+        onClick={handleConnect}
+        disabled={isLoading}
+        className={`px-8 py-3 text-black font-semibold rounded-full transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl ${
+          isCallActive
+            ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+            : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+        } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+      >
+        {isLoading ? "Connecting..." : isCallActive ? "Disconnect" : "Connect"}
+      </button>
+
+      {/* Status text */}
+      <p className="mt-4 text-gray-600 text-sm">
+        {isCallActive
+          ? "Voice AI is active - speak now!"
+          : "Click Connect to start voice conversation"}
+      </p>
     </div>
   );
 }
