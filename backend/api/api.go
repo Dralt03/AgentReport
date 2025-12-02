@@ -27,6 +27,16 @@ func ScrapeHandler(w http.ResponseWriter, r *http.Request) {
 
 func ItemHandler(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
+
+	var input struct {
+        ToolCallId string `json:"toolCallId"`
+    }
+    json.NewDecoder(r.Body).Decode(&input)
+
+    if input.ToolCallId == "" {
+        http.Error(w, "Missing toolCallId", 400)
+        return
+    }
 	
 	var db *sql.DB
 	if err := godotenv.Load(); err != nil {
@@ -62,5 +72,19 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 		items = append(items, i)
 	}
 
-	json.NewEncoder(w).Encode(items)
+	var resultStr string
+    for _, item := range items {
+        resultStr += fmt.Sprintf("• %s — %s\n\n", item.Title, item.Content)
+    }
+
+    response := map[string]interface{}{
+        "results": []map[string]string{
+            {
+                "toolCallId": input.ToolCallId,
+                "result":     resultStr,
+            },
+        },
+    }
+
+	json.NewEncoder(w).Encode(response)
 }
