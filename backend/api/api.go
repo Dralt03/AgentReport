@@ -63,7 +63,7 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 		log.Print("DATABASE URL NOT FOUND")
 	}
 
-	db, err := sql.Open("postgres", connString)
+	db, err = sql.Open("postgres", connString)
     if err != nil {
         log.Fatal(err)
     }
