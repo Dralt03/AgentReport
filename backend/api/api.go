@@ -48,12 +48,6 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 	if v, ok := payload["toolCallId"].(string); ok {
 		toolCallId = v
 	}
-
-	if toolCallId == "" {
-		log.Println("Missing toolCallId in incoming payload:", string(body))
-		http.Error(w, "Missing toolCallId", http.StatusBadRequest)
-		return
-	}
 	
 	if err := godotenv.Load(); err != nil {
 		log.Println(".env not found")
@@ -132,7 +126,6 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 		resultText = sb.String()
 	}
 
-	// Return successful response in Vapi format
 	response := map[string]interface{}{
 		"results": []map[string]interface{}{
 			{
