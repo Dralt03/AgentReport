@@ -47,15 +47,11 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 	// Debug: Log the entire payload to see what fields are present
 	log.Printf("Received payload: %+v", payload)
 	
-	// Try different possible field names for toolCallId
+	// Extract tool_call_id (Vapi uses snake_case, not camelCase)
 	toolCallId := ""
-	if v, ok := payload["toolCallId"].(string); ok {
+	if v, ok := payload["tool_call_id"].(string); ok {
 		toolCallId = v
-	} else if v, ok := payload["tool_call_id"].(string); ok {
-		toolCallId = v
-	} else if v, ok := payload["toolcallid"].(string); ok {
-		toolCallId = v
-	} else if v, ok := payload["ToolCallId"].(string); ok {
+	} else if v, ok := payload["toolCallId"].(string); ok {
 		toolCallId = v
 	}
 	
