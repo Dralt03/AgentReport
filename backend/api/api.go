@@ -14,8 +14,8 @@ import (
 
 type Item struct {
 	ID    int    `json:"id"`
-	Title  string `json:"name"`
-	Content string `json:"value"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 func ScrapeHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +74,7 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 
 	var resultStr string
     for _, item := range items {
-        resultStr += fmt.Sprintf("• %s — %s\n\n", item.Title, item.Content)
+        resultStr += fmt.Sprintf("• %s — %s\n\n", item.Name, item.Value)
     }
 
     response := map[string]interface{}{
