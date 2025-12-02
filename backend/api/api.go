@@ -28,13 +28,26 @@ func ScrapeHandler(w http.ResponseWriter, r *http.Request) {
 func ItemHandler(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 
-	var input struct {
-        ToolCallId string `json:"toolCallId"`
+	body, err := io.ReadAll(r.Body)
+    if err != nil {
+        http.Error(w, "Failed to read body", http.StatusBadRequest)
+        return
     }
-    json.NewDecoder(r.Body).Decode(&input)
+	
+	var payload map[string]interface{}
+    if err := json.Unmarshal(body, &payload); err != nil {
+        http.Error(w, "Invalid JSON", http.StatusBadRequest)
+        return
+    }
 
-    if input.ToolCallId == "" {
-        http.Error(w, "Missing toolCallId", 400)
+    toolCallId := ""
+    if v, ok := payload["toolCallId"].(string); ok {
+        toolCallId = v
+    }
+
+    if toolCallId == "" {
+        log.Println("Missing toolCallId in incoming payload:", string(body))
+        http.Error(w, "Missing toolCallId", http.StatusBadRequest)
         return
     }
 	
@@ -72,19 +85,20 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 		items = append(items, i)
 	}
 
-	var resultStr string
+	var sb strings.Builder
     for _, item := range items {
-        resultStr += fmt.Sprintf("• %s — %s\n\n", item.Name, item.Value)
+        sb.WriteString(fmt.Sprintf("• %s — %s\n", item.Name, item.Value))
     }
 
     response := map[string]interface{}{
         "results": []map[string]string{
             {
-                "toolCallId": input.ToolCallId,
-                "result":     resultStr,
+                "toolCallId": toolCallId,
+                "result":     sb.String(),
             },
         },
     }
 
+    w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
