@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
+	"io"
 	"os"
 
 	"github.com/Dralt03/AgentReport/scraper"
