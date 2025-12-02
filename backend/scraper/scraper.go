@@ -18,7 +18,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-//For news channels because Colly only scrapes raw HTML
 type RSS struct {
 	Channel struct {
 		Items []struct {
