@@ -44,10 +44,22 @@ func ItemHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	// Debug: Log the entire payload to see what fields are present
+	log.Printf("Received payload: %+v", payload)
+	
+	// Try different possible field names for toolCallId
 	toolCallId := ""
 	if v, ok := payload["toolCallId"].(string); ok {
 		toolCallId = v
+	} else if v, ok := payload["tool_call_id"].(string); ok {
+		toolCallId = v
+	} else if v, ok := payload["toolcallid"].(string); ok {
+		toolCallId = v
+	} else if v, ok := payload["ToolCallId"].(string); ok {
+		toolCallId = v
 	}
+	
+	log.Printf("Extracted toolCallId: '%s'", toolCallId)
 	
 	if err := godotenv.Load(); err != nil {
 		log.Println(".env not found")
