@@ -14,7 +14,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/scrape", api.ScrapeHandler).Methods("GET")
-	r.HandleFunc("/items", api.ItemHandler).Methods("POST")
+	r.HandleFunc("/items", api.ItemHandler).Methods("GET")
 
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),

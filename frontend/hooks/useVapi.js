@@ -64,39 +64,6 @@ export const useVapi = () => {
   if (!vapi) return;
 
   try {
-    // Register the tool BEFORE vapi.start()
-    if (vapi.tools) {
-      vapi.tools.add({
-        name: "get_news",
-        description:
-          "Fetch the latest scraped news articles. Returns a JSON array.",
-        async execute() {
-          try {
-            const res = await fetch("https://agentreport.onrender.com/items");
-
-            if (!res.ok) {
-              return { success: false, error: `HTTP ${res.status}` };
-            }
-
-            const data = await res.json();
-
-            return {
-              success: true,
-              articles: data,
-            };
-          } catch (err) {
-            console.error("Error fetching news:", err);
-            return {
-              success: false,
-              error: "Failed to fetch news.",
-            };
-          }
-        },
-      });
-    } else {
-      console.warn("vapi.tools is undefined. Skipping tool registration.");
-    }
-
       const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
       if (!assistantId) {
         console.error("Missing Vapi Assistant ID. Please set NEXT_PUBLIC_VAPI_ASSISTANT_ID in your .env file.");
