@@ -14,8 +14,8 @@ import (
 
 type Item struct {
 	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	Title  string `json:"name"`
+	Content string `json:"value"`
 }
 
 func ScrapeHandler(w http.ResponseWriter, r *http.Request) {
